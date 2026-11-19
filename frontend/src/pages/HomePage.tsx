@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { apiGet } from '../api/client'
 import { useCities, useCurrent, useForecast, useToday } from '../api/hooks'
 import type { City } from '../api/types'
+import { AlertBanner } from '../components/AlertBanner'
 import { BestHours } from '../components/BestHours'
 import { CitySelector } from '../components/CitySelector'
 import { ErrorState } from '../components/ErrorState'
@@ -101,6 +102,8 @@ export function HomePage() {
           {locationError}
         </p>
       )}
+
+      <AlertBanner cityId={cityId} timeZone={timeZone} />
 
       {current.isPending ? (
         <Skeleton className="h-72" label="Carregando o UV atual" />

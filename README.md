@@ -45,7 +45,7 @@ cp .env.example .env
 # edite .env e preencha OPENUV_API_KEY=...
 ```
 
-**Sem chave o projeto também funciona.** O coletor detecta a chave vazia, registra um aviso no log e usa o **provedor simulado**. Todos os dados gerados assim ficam marcados como sintéticos.
+**Sem chave o projeto também funciona.** O coletor detecta a chave vazia, registra um aviso no log e usa o **provedor simulado**, que gera tanto o UV atual quanto a previsão. Todos os dados gerados assim ficam marcados como sintéticos: a API devolve `display_synthetic` / `synthetic`, e a interface mostra "dado simulado" no lugar de "medido".
 
 ### 2. Subir o ambiente
 
@@ -117,7 +117,7 @@ curl -s -X POST "http://localhost:8000/api/v1/alerts" \
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/health` | Estado da API e do banco |
+| GET | `/health` | Estado da API e do banco, e o provedor de UV em uso (`openuv` ou `simulado`) |
 | GET | `/cities?q=` | Lista e busca cidades |
 | GET | `/cities/nearest?lat=&lng=` | Cidade monitorada mais próxima ("usar minha localização") |
 | GET | `/cities/{id}/current?phototype=` | UV agora: valor, nível OMS, recomendação, estado e tempo até queimar |
@@ -125,7 +125,7 @@ curl -s -X POST "http://localhost:8000/api/v1/alerts" \
 | GET | `/cities/{id}/forecast` | Previsão de 5 dias com UV máximo e código do tempo |
 | GET | `/cities/{id}/history?period=7d\|30d\|12m` | UV máximo diário, com indicação de dias sintéticos |
 | GET | `/compare?city_ids=&date=` | Tabela comparativa e séries por hora (até 4 cidades) |
-| GET | `/compare/export.csv` | Tabela comparativa em CSV (UTF-8 com BOM, abre no Excel) |
+| GET | `/compare/export.csv` | Tabela comparativa em CSV no padrão do Excel pt-BR (`;`, vírgula decimal, UTF-8 com BOM) |
 | GET | `/map?when=now\|peak_today\|tomorrow` | UV de todas as cidades para o mapa |
 | GET | `/readings?city_id=&from=&to=&origin=&page=&page_size=` | Consulta bruta e paginada das leituras |
 | GET/POST | `/alerts` | Lista e cria alertas (header `X-Client-Id`) |
@@ -283,7 +283,7 @@ x-access-token: {OPENUV_API_KEY}
 - **Autenticação:** a chave de API vai no header `x-access-token`, lida de variável de ambiente e nunca versionada.
 - **Dados extraídos:** `uv` (atual), `uv_time`, `uv_max` e `uv_max_time` do dia.
 - **Cota:** o plano gratuito permite **50 requisições por dia**. Com 5 cidades, o coletor consulta a cada **120 minutos, só entre 6h e 19h** no horário local, o que dá cerca de 35 chamadas por dia. Tudo é configurável no `.env`.
-- **Erros:** chave inválida (401/403), cota estourada (429) ou falha de rede viram log de aviso. As demais cidades continuam sendo coletadas e o processo segue rodando.
+- **Erros:** falha de rede e respostas 5xx são repetidas até 3 vezes, com backoff exponencial (0,5 s, 1 s). Chave inválida (401/403) e cota estourada (429) **não** são repetidas, porque repetir só gastaria cota. Esses erros e as respostas malformadas viram log de aviso; as demais cidades continuam sendo coletadas e o processo segue rodando.
 
 ### Open-Meteo: previsão, sem chave
 
@@ -346,17 +346,18 @@ O objetivo é que qualquer pessoa responda em até 5 segundos a pergunta **"poss
 | Duas fontes (OpenUV + Open-Meteo) | A OpenUV atende o requisito de chave de API; a Open-Meteo cobre a previsão por hora e a de 5 dias | Duas integrações |
 | Coleta a cada 120 min, só entre 6h e 19h | Respeita a cota gratuita de 50 chamadas por dia | O "UV agora" medido pode ter até 2h; entre coletas, a API mostra a **estimativa** da previsão, sempre rotulada como estimada |
 | `stale` só dentro da janela de coleta | Evita marcar toda cidade como "estação offline" de madrugada | — |
+| Medição de outro dia nunca vira "UV agora" quando há previsão | Se a coleta falhar de manhã, mostrar o "0" de ontem à noite ao meio-dia seria um conselho perigoso | — |
 | Modo simulado quando falta a chave | O avaliador roda o projeto sem criar conta | Os dados ficam marcados como sintéticos |
 | Histórico sintético até ontem, com o dado real sempre vencendo | O mapa de calor de 12 meses funciona desde o primeiro dia | Exige deixar a origem visível, o que a API e a interface fazem |
 | Alertas sem login (UUID por navegador) | Escopo de teste técnico | Trocar de navegador perde os alertas |
 | Nível OMS calculado no backend | Uma fonte de verdade para a regra | — |
-| `npm install` em vez de `npm ci` na imagem do front | Contorna um bug do npm com as dependências opcionais WASM do Tailwind | Aplicação do lockfile um pouco menos estrita |
+| Versões travadas: `backend/requirements.lock`, `package-lock.json` com `npm ci`, imagens com tag de versão (Python 3.12, Node 24 LTS, Postgres 16) | Build reproduzível hoje e daqui a meses | Atualizar dependências exige regenerar o lock |
 
 ---
 
 ## Testes e qualidade
 
-**Backend:** 79 testes com pytest, rodando contra um PostgreSQL real (banco `uv_test`), mais o ruff.
+**Backend:** 92 testes com pytest, rodando contra um PostgreSQL real (banco `uv_test`), mais o ruff.
 
 ```bash
 docker compose up -d db
@@ -377,7 +378,7 @@ npm test
 npm run build
 ```
 
-O **CI** (`.github/workflows/ci.yml`) roda lint e testes do backend com o serviço Postgres, além dos testes e do build do front.
+O **CI** (`.github/workflows/ci.yml`) roda lint, as migrations (upgrade e downgrade) e os testes do backend com o serviço Postgres, além dos testes e do build do front.
 
 ---
 

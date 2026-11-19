@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -7,9 +7,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Dependências com versões travadas (requirements.lock) em camada própria, para cache.
+COPY requirements.lock ./
+RUN pip install -r requirements.lock
+
 COPY pyproject.toml ./
 COPY app ./app
-RUN pip install .
+RUN pip install --no-deps .
 
 COPY alembic.ini ./
 COPY migrations ./migrations

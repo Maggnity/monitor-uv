@@ -1,9 +1,7 @@
-FROM node:25-slim AS build
+FROM node:24.11-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-# `npm ci` falha por um bug do npm com as deps opcionais WASM do Tailwind (oxide-wasm32-wasi);
-# `npm install` respeita o package-lock.json e contorna o problema.
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 

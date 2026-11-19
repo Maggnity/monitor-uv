@@ -19,3 +19,6 @@ coverage/
 .superpowers/
 .idea/
 .vscode/
+
+# Artefatos de build do Python
+build/

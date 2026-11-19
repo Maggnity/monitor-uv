@@ -93,3 +93,55 @@ class ForecastDayOut(BaseModel):
 class HealthOut(BaseModel):
     status: str
     database: str
+
+
+class HistoryDayOut(BaseModel):
+    date: date
+    uv_max: float
+    level_key: str
+    origin: Literal["real", "sintetico", "forecast"]
+
+
+class HistoryOut(BaseModel):
+    period: Literal["7d", "30d", "12m"]
+    contains_synthetic: bool = Field(description="O período inclui dias sintéticos de demonstração")
+    days: list[HistoryDayOut]
+
+
+class CompareRowOut(BaseModel):
+    city: CityOut
+    current_uv: float | None
+    current_kind: Literal["measured", "estimated"] | None
+    peak_today: float | None = Field(description="Pico previsto para hoje")
+    hours_above_8: int = Field(description="Horas previstas hoje com UV >= 8")
+    trend: Literal["up", "down", "stable"] = Field(
+        description="Pico de hoje comparado à média dos 7 dias anteriores"
+    )
+    sparkline: list[float] = Field(description="UV máximo dos 7 dias anteriores + hoje")
+
+
+class SeriesPointOut(BaseModel):
+    time: datetime
+    uv: float
+
+
+class SeriesOut(BaseModel):
+    city_id: int
+    points: list[SeriesPointOut]
+
+
+class CompareOut(BaseModel):
+    date: date
+    contains_synthetic: bool
+    rows: list[CompareRowOut]
+    series: list[SeriesOut]
+
+
+class MapPointOut(BaseModel):
+    city_id: int
+    name: str
+    lat: float
+    lng: float
+    uv: float | None
+    level: LevelOut | None
+    kind: Literal["measured", "estimated", "forecast"] | None

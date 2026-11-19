@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.api.deps import CityDep, NowDep, SessionDep, SettingsDep
@@ -5,6 +7,8 @@ from app.api.schemas import (
     CityOut,
     CurrentOut,
     ForecastDayOut,
+    HistoryDayOut,
+    HistoryOut,
     HourlyOut,
     LevelOut,
     PeakOut,
@@ -14,6 +18,7 @@ from app.api.schemas import (
 )
 from app.domain.uv_scale import classify
 from app.services import cities as service
+from app.services.compare import history as history_service
 
 router = APIRouter(prefix="/cities", tags=["Cidades"])
 
@@ -79,3 +84,25 @@ def forecast(city: CityDep, session: SessionDep, now: NowDep):
         )
         for day in service.forecast_for_city(session, city, now)
     ]
+
+
+@router.get(
+    "/{city_id}/history", response_model=HistoryOut, summary="Histórico de UV máximo diário"
+)
+def history(
+    city: CityDep,
+    session: SessionDep,
+    now: NowDep,
+    period: Literal["7d", "30d", "12m"] = Query("7d", description="7d, 30d ou 12m"),
+):
+    days = history_service(session, city, now, period)
+    return HistoryOut(
+        period=period,
+        contains_synthetic=any(d.origin == "sintetico" for d in days),
+        days=[
+            HistoryDayOut(
+                date=d.date, uv_max=d.uv_max, level_key=classify(d.uv_max).key, origin=d.origin
+            )
+            for d in days
+        ],
+    )

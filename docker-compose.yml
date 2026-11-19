@@ -1,3 +1,13 @@
+x-backend: &backend
+  build: ./backend
+  image: monitor-uv-backend
+  env_file:
+    - path: .env
+      required: false
+  environment: &backend-env
+    DATABASE_URL: postgresql+psycopg://uv:uv@db:5432/uv
+    TZ: America/Sao_Paulo
+
 services:
   db:
     image: postgres:16-alpine
@@ -6,7 +16,7 @@ services:
       POSTGRES_PASSWORD: uv
       POSTGRES_DB: uv
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
@@ -15,6 +25,36 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  migrate:
+    <<: *backend
+    command: ["python", "-m", "app.seed.main"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  collector:
+    <<: *backend
+    command: ["python", "-m", "app.collector.main"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

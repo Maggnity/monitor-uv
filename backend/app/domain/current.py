@@ -5,8 +5,9 @@ Regras (spec, seção 5.0):
 2. Mostra a medição se tiver menos de 30 min; senão a estimativa da previsão, rotulada.
 3. `night` quando o valor mostrado é ~0 fora do período de sol (tem precedência).
 4. `stale` só dentro da janela de coleta (a partir da 1ª coleta esperada do dia), quando
-   a medição tem mais de 2x o intervalo; nesse caso mostra o último valor medido,
-   marcado como desatualizado.
+   a medição tem mais de 2x o intervalo; nesse caso mostra o último valor medido de hoje,
+   marcado como desatualizado. Uma medição de um dia anterior nunca vira "UV agora" se
+   houver estimativa: o valor de ontem à noite (~0) seria um conselho perigoso ao meio-dia.
 """
 
 from dataclasses import dataclass
@@ -59,7 +60,9 @@ def resolve_current(
     elif measured_uv is not None and _inside_window(local, window, interval_min):
         if age > timedelta(minutes=2 * interval_min):
             status = "stale"
-            display, kind = measured_uv, "measured"
+            measured_today = measured_at.astimezone(local.tzinfo).date() == local.date()
+            if measured_today or estimated_now is None:
+                display, kind = measured_uv, "measured"
 
     return CurrentState(
         status=status,

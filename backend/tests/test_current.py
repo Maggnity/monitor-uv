@@ -54,3 +54,12 @@ def test_current_not_stale_before_first_collection_of_the_day():
     state = resolve(six_thirty, last_night, 0.8)
     assert state.status == "ok"
     assert state.display_kind == "estimated"
+
+
+def test_current_reading_from_previous_day_yields_to_estimate():
+    noon = datetime(2026, 11, 18, 15, 0, tzinfo=UTC)  # 12h em SP
+    yesterday_evening = (datetime(2026, 11, 17, 22, 0, tzinfo=UTC), 0.16)
+    state = resolve(noon, yesterday_evening, 11.0)
+    assert state.status == "stale"
+    assert state.display_uv == 11.0
+    assert state.display_kind == "estimated"

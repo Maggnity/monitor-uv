@@ -75,3 +75,53 @@ def test_openmeteo_parses_hourly_and_daily_to_utc():
     assert forecast.daily[0].uv_max == 11.2
     assert forecast.daily[0].weather_code == 3
     assert forecast.source == "openmeteo"
+
+
+@respx.mock
+def test_openuv_retries_network_errors_then_succeeds():
+    route = respx.get("https://api.openuv.io/api/v1/uv").mock(
+        side_effect=[
+            httpx.ConnectError("down"),
+            httpx.Response(503),
+            httpx.Response(200, json=OPENUV_BODY),
+        ]
+    )
+    reading = OpenUvProvider("k", httpx.Client(), sleep=lambda _: None).fetch_current(SAO_PAULO)
+    assert reading.uv == 3.2
+    assert route.call_count == 3
+
+
+@respx.mock
+def test_openuv_does_not_retry_quota_errors():
+    route = respx.get("https://api.openuv.io/api/v1/uv").mock(return_value=httpx.Response(429))
+    with pytest.raises(ProviderError):
+        OpenUvProvider("k", httpx.Client(), sleep=lambda _: None).fetch_current(SAO_PAULO)
+    assert route.call_count == 1
+
+
+@respx.mock
+def test_openuv_gives_up_after_three_network_errors():
+    route = respx.get("https://api.openuv.io/api/v1/uv").mock(
+        side_effect=httpx.ConnectError("down")
+    )
+    with pytest.raises(ProviderError):
+        OpenUvProvider("k", httpx.Client(), sleep=lambda _: None).fetch_current(SAO_PAULO)
+    assert route.call_count == 3
+
+
+@respx.mock
+def test_openuv_malformed_body_raises_provider_error():
+    respx.get("https://api.openuv.io/api/v1/uv").mock(
+        return_value=httpx.Response(200, json={"result": {"uv": None}})
+    )
+    with pytest.raises(ProviderError):
+        OpenUvProvider("k", httpx.Client(), sleep=lambda _: None).fetch_current(SAO_PAULO)
+
+
+@respx.mock
+def test_openmeteo_malformed_body_raises_provider_error():
+    respx.get("https://api.open-meteo.com/v1/forecast").mock(
+        return_value=httpx.Response(200, json={"unexpected": True})
+    )
+    with pytest.raises(ProviderError):
+        OpenMeteoProvider(httpx.Client(), sleep=lambda _: None).fetch_forecast(SAO_PAULO)

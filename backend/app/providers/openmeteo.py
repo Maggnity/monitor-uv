@@ -1,11 +1,20 @@
 """Cliente da Open-Meteo: previsão horária e diária de UV (não exige chave)."""
 
+import time
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
 
 import httpx
 
-from app.providers.base import CityLike, DailyPoint, Forecast, HourlyPoint, ProviderError
+from app.providers.base import (
+    CityLike,
+    DailyPoint,
+    Forecast,
+    HourlyPoint,
+    ProviderError,
+    get_with_retry,
+)
 
 OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
 
@@ -13,31 +22,31 @@ OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
 class OpenMeteoProvider:
     source = "openmeteo"
 
-    def __init__(self, client: httpx.Client):
+    def __init__(self, client: httpx.Client, sleep: Callable[[float], None] = time.sleep):
         self._client = client
+        self._sleep = sleep
 
     def fetch_forecast(self, city: CityLike, now_utc: datetime | None = None) -> Forecast:
+        response = get_with_retry(
+            self._client,
+            OPENMETEO_URL,
+            params={
+                "latitude": float(city.lat),
+                "longitude": float(city.lng),
+                "hourly": "uv_index",
+                "daily": "uv_index_max,weather_code",
+                "timezone": city.timezone,
+                "forecast_days": 5,
+            },
+            name="Open-Meteo",
+            sleep=self._sleep,
+        )
         try:
-            response = self._client.get(
-                OPENMETEO_URL,
-                params={
-                    "latitude": float(city.lat),
-                    "longitude": float(city.lng),
-                    "hourly": "uv_index",
-                    "daily": "uv_index_max,weather_code",
-                    "timezone": city.timezone,
-                    "forecast_days": 5,
-                },
-                timeout=15,
-            )
-        except httpx.HTTPError as exc:
-            raise ProviderError(f"Falha de rede na Open-Meteo: {exc}") from exc
-        if response.status_code != 200:
-            raise ProviderError(
-                f"Open-Meteo respondeu {response.status_code}", status=response.status_code
-            )
-        body = response.json()
-        zone = ZoneInfo(city.timezone)
+            return self._parse(response.json(), ZoneInfo(city.timezone))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ProviderError(f"Resposta inesperada da Open-Meteo: {exc}") from exc
+
+    def _parse(self, body: dict, zone: ZoneInfo) -> Forecast:
         hourly = [
             HourlyPoint(
                 forecast_for=datetime.fromisoformat(t).replace(tzinfo=zone).astimezone(UTC),

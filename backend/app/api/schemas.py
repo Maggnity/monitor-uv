@@ -145,3 +145,47 @@ class MapPointOut(BaseModel):
     uv: float | None
     level: LevelOut | None
     kind: Literal["measured", "estimated", "forecast"] | None
+
+
+class AlertCreate(BaseModel):
+    city_id: int
+    threshold: float = Field(ge=1, le=15, description="Avisar quando o UV passar deste valor")
+
+
+class AlertUpdate(BaseModel):
+    active: bool | None = None
+    threshold: float | None = Field(default=None, ge=1, le=15)
+
+
+class AlertOut(BaseModel):
+    id: int
+    city: CityOut
+    threshold: float
+    active: bool
+    created_at: datetime
+    last_triggered_at: datetime | None
+
+
+class AlertTriggerOut(BaseModel):
+    alert_id: int
+    city_id: int
+    city_name: str
+    threshold: float
+    uv: float
+    triggered_at: datetime
+
+
+class ReadingOut(BaseModel):
+    id: int
+    city_id: int
+    measured_at: datetime
+    uv_index: float
+    source: str
+    origin: Literal["real", "sintetico"]
+
+
+class ReadingsPage(BaseModel):
+    items: list[ReadingOut]
+    page: int
+    page_size: int
+    total: int

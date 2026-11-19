@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import cities, city_map, compare, health
+from app.api.routes import alerts, cities, city_map, compare, health, readings
 from app.config import get_settings
 
 API_PREFIX = "/api/v1"
@@ -26,5 +26,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, cities, compare, city_map):
+for module in (health, cities, compare, city_map, readings, alerts):
     app.include_router(module.router, prefix=API_PREFIX)

@@ -11,9 +11,8 @@ TEST_DATABASE_URL = os.getenv(
 
 @pytest.fixture(scope="session")
 def engine():
-    from app.db import Base
-
     import app.models  # noqa: F401  (registra os modelos)
+    from app.db import Base
 
     try:
         import app.genetics.models  # noqa: F401

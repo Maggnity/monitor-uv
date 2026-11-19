@@ -73,4 +73,9 @@ describe('UvCard', () => {
     )
     expect(screen.getByText(/ainda não temos leituras/i)).toBeInTheDocument()
   })
+
+  it('com fototipo escolhido mostra o tempo estimado até queimar', () => {
+    render(<UvCard current={makeCurrent({ minutes_to_burn: 17 })} now={NOW} />)
+    expect(screen.getByText(/você pode se queimar em cerca de 17 min agora/i)).toBeInTheDocument()
+  })
 })

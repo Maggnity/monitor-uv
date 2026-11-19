@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import alerts, cities, city_map, compare, health, readings
 from app.config import get_settings
+from app.genetics import routes as genetics
 
 API_PREFIX = "/api/v1"
 
@@ -26,5 +27,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, cities, compare, city_map, readings, alerts):
+for module in (health, cities, compare, city_map, readings, alerts, genetics):
     app.include_router(module.router, prefix=API_PREFIX)

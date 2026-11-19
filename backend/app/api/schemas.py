@@ -55,6 +55,11 @@ class CurrentOut(BaseModel):
     next_peak: PeakOut | None = Field(
         default=None, description="Próximo pico previsto (preenchido à noite)"
     )
+    minutes_to_burn: int | None = Field(
+        default=None,
+        description="Minutos estimados até a queimadura para o fototipo informado "
+        "(demonstrativo; não substitui orientação médica)",
+    )
 
 
 class HourlyOut(BaseModel):
@@ -118,6 +123,13 @@ class CompareRowOut(BaseModel):
         description="Pico de hoje comparado à média dos 7 dias anteriores"
     )
     sparkline: list[float] = Field(description="UV máximo dos 7 dias anteriores + hoje")
+    vulnerability: float | None = Field(
+        default=None,
+        description="Pico previsto × proporção estimada da população com fototipos I–III",
+    )
+    vulnerability_illustrative: bool = Field(
+        default=False, description="A distribuição de fototipos usada é ilustrativa"
+    )
 
 
 class SeriesPointOut(BaseModel):

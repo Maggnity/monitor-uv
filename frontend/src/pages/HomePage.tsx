@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiGet } from '../api/client'
-import { useCities, useCurrent, useForecast, useToday } from '../api/hooks'
+import { useCities, useCurrent, useForecast, usePhototypes, useToday } from '../api/hooks'
 import type { City } from '../api/types'
 import { AlertBanner } from '../components/AlertBanner'
 import { BestHours } from '../components/BestHours'
@@ -9,6 +9,7 @@ import { CitySelector } from '../components/CitySelector'
 import { ErrorState } from '../components/ErrorState'
 import { ForecastList } from '../components/ForecastList'
 import { LocationPrompt } from '../components/LocationPrompt'
+import { PhototypePicker } from '../components/PhototypePicker'
 import { ProtectionTips } from '../components/ProtectionTips'
 import { Skeleton } from '../components/Skeleton'
 import { UvCard } from '../components/UvCard'
@@ -16,9 +17,11 @@ import { UvTimeline } from '../components/UvTimeline'
 import {
   DEFAULT_CITY_ID,
   getCityId,
+  getPhototype,
   hasAskedLocation,
   markAskedLocation,
   setCityId,
+  setPhototype,
 } from '../lib/storage'
 
 function localToday(timeZone: string): string {
@@ -33,8 +36,10 @@ export function HomePage() {
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
 
+  const [phototype, setPhototypeState] = useState<string | null>(getPhototype())
   const cities = useCities()
-  const current = useCurrent(cityId)
+  const phototypes = usePhototypes()
+  const current = useCurrent(cityId, phototype)
   const today = useToday(cityId)
   const forecast = useForecast(cityId)
 
@@ -133,6 +138,16 @@ export function HomePage() {
             <ErrorState message="Não foi possível carregar a previsão." onRetry={() => forecast.refetch()} />
           ) : (
             <ForecastList days={forecast.data} today={localToday(timeZone)} />
+          )}
+          {phototypes.data && phototypes.data.length > 0 && (
+            <PhototypePicker
+              phototypes={phototypes.data}
+              value={phototype}
+              onChange={(code) => {
+                setPhototype(code)
+                setPhototypeState(code)
+              }}
+            />
           )}
           {current.data?.level && <ProtectionTips level={current.data.level.key} />}
         </div>

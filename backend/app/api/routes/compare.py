@@ -9,6 +9,8 @@ from sqlalchemy import select
 
 from app.api.deps import NowDep, SessionDep, SettingsDep
 from app.api.schemas import CityOut, CompareOut, CompareRowOut, SeriesOut, SeriesPointOut
+from app.genetics.burn import vulnerability
+from app.genetics.service import sensitive_share_by_city
 from app.models import City
 from app.services import compare as service
 from app.timeutil import local_now
@@ -60,6 +62,7 @@ def compare(
         service.compare_row(session, city, now, settings)
         for city in session.scalars(select(City).order_by(City.id))
     ]
+    shares = sensitive_share_by_city(session)
     series: list[SeriesOut] = []
     series_synthetic = False
     for city in selected:
@@ -80,6 +83,8 @@ def compare(
                 hours_above_8=r.hours_above_8,
                 trend=r.trend,
                 sparkline=r.sparkline,
+                vulnerability=vulnerability(r.peak_today, shares.get(r.city.id)),
+                vulnerability_illustrative=r.city.id in shares,
             )
             for r in rows
         ],
@@ -107,10 +112,13 @@ def export_csv(session: SessionDep, now: NowDep, settings: SettingsDep):
             "pico_previsto",
             "horas_acima_de_8",
             "tendencia",
+            "vulnerabilidade_estimada_ilustrativa",
         ]
     )
+    shares = sensitive_share_by_city(session)
     for city in session.scalars(select(City).order_by(City.id)):
         row = service.compare_row(session, city, now, settings)
+        estimated = vulnerability(row.peak_today, shares.get(city.id))
         writer.writerow(
             [
                 city.name,
@@ -121,6 +129,7 @@ def export_csv(session: SessionDep, now: NowDep, settings: SettingsDep):
                 "" if row.peak_today is None else row.peak_today,
                 row.hours_above_8,
                 TREND_LABEL[row.trend],
+                "" if estimated is None else estimated,
             ]
         )
     # BOM para o Excel reconhecer UTF-8 (acentos).

@@ -17,6 +17,8 @@ from app.api.schemas import (
     WindowOut,
 )
 from app.domain.uv_scale import classify
+from app.genetics.burn import minutes_to_burn
+from app.genetics.service import med_for
 from app.services import cities as service
 from app.services.compare import history as history_service
 
@@ -44,8 +46,20 @@ def nearest(
 
 
 @router.get("/{city_id}/current", response_model=CurrentOut, summary="UV agora")
-def current(city: CityDep, session: SessionDep, now: NowDep, settings: SettingsDep):
+def current(
+    city: CityDep,
+    session: SessionDep,
+    now: NowDep,
+    settings: SettingsDep,
+    phototype: Literal["I", "II", "III", "IV", "V", "VI"] | None = Query(
+        None, description="Fototipo de Fitzpatrick para estimar o tempo até queimar"
+    ),
+):
     state, peak = service.current_for_city(session, city, now, settings)
+    burn = None
+    if phototype and state.display_uv is not None:
+        med = med_for(session, phototype)
+        burn = minutes_to_burn(state.display_uv, med) if med else None
     return CurrentOut(
         city=CityOut.model_validate(city),
         status=state.status,
@@ -56,6 +70,7 @@ def current(city: CityDep, session: SessionDep, now: NowDep, settings: SettingsD
         estimated_uv=state.estimated_uv,
         level=LevelOut.of(state.level),
         next_peak=PeakOut(**peak.__dict__) if peak else None,
+        minutes_to_burn=burn,
     )
 
 

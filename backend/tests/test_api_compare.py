@@ -98,6 +98,7 @@ def test_export_csv_header_and_rows(client, session):
         "pico_previsto",
         "horas_acima_de_8",
         "tendencia",
+        "vulnerabilidade_estimada_ilustrativa",
     ]
     assert len(rows) == 6
 

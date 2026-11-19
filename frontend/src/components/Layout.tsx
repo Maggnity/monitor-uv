@@ -50,7 +50,7 @@ export function Layout({ footer }: { footer?: React.ReactNode }) {
         <main
           id="conteudo"
           tabIndex={-1}
-          className="mx-auto w-full max-w-5xl flex-1 p-4 pb-24 outline-none md:p-8"
+          className="mx-auto w-full max-w-5xl flex-1 p-4 pb-6 outline-none md:p-8"
         >
           <Outlet />
         </main>

@@ -82,7 +82,7 @@ export function CityCompareTable({ rows }: { rows: CompareRow[] }) {
             <th scope="col" className="px-3 py-2 text-left font-semibold">
               Tendência
             </th>
-            {showVulnerability && header('vulnerability', 'Vulnerabilidade estimada')}
+            {showVulnerability && header('vulnerability', 'Vulnerabilidade (ilustrativa)')}
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100">

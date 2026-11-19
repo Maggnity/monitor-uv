@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Disclaimer } from './components/Disclaimer'
 import { Layout } from './components/Layout'
 import { AlertsPage } from './pages/AlertsPage'
 import { ComparePage } from './pages/ComparePage'
@@ -15,7 +16,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route element={<Layout />}>
+          <Route element={<Layout footer={<Disclaimer />} />}>
             <Route index element={<HomePage />} />
             <Route path="mapa" element={<MapPage />} />
             <Route path="comparar" element={<ComparePage />} />

@@ -93,7 +93,14 @@ export function UvCard({ current, now = new Date(), children }: Props) {
             <NightPeak current={current} />
           </>
         ) : (
-          <p className="text-xl font-semibold">{current.level.recommendation}</p>
+          <>
+            <p className="text-xl font-semibold">{current.level.recommendation}</p>
+            {current.minutes_to_burn != null && (
+              <p className="text-lg font-medium">
+                Você pode se queimar em cerca de {current.minutes_to_burn} min agora.
+              </p>
+            )}
+          </>
         )}
       </div>
 

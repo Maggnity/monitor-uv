@@ -100,4 +100,32 @@ def test_unknown_city_404(client, session):
 
 
 def test_health(client):
-    assert client.get("/api/v1/health").json() == {"status": "ok", "database": "ok"}
+    body = client.get("/api/v1/health").json()
+    assert body["status"] == "ok"
+    assert body["database"] == "ok"
+
+
+def test_current_flags_synthetic_measurement(client, session):
+    seed_cities(session)
+    add_reading(session, 1, FIXED_NOW - timedelta(minutes=10), 9, origin="sintetico")
+    body = client.get("/api/v1/cities/1/current").json()
+    assert body["display_kind"] == "measured"
+    assert body["display_synthetic"] is True
+
+
+def test_current_flags_simulated_estimate(client, session):
+    seed_cities(session)
+    add_hourly(session, 1, sp_hour(14), 9.0, source="simulado")
+    body = client.get("/api/v1/cities/1/current").json()
+    assert body["display_kind"] == "estimated"
+    assert body["display_synthetic"] is True
+
+
+def test_current_real_measurement_not_synthetic(client, session):
+    seed_cities(session)
+    add_reading(session, 1, FIXED_NOW - timedelta(minutes=10), 9)
+    assert client.get("/api/v1/cities/1/current").json()["display_synthetic"] is False
+
+
+def test_health_reports_effective_provider(client):
+    assert client.get("/api/v1/health").json()["uv_provider"] in ("openuv", "simulado")

@@ -16,6 +16,7 @@ from app.services.cities import (
     current_for_city,
     day_points,
     forecast_for_city,
+    forecast_is_synthetic,
 )
 from app.services.forecast import latest_daily
 from app.timeutil import local_day_bounds_utc, local_now
@@ -72,6 +73,7 @@ class CompareRow:
     city: City
     current_uv: float | None
     current_kind: str | None
+    current_synthetic: bool
     peak_today: float | None
     hours_above_8: int
     trend: Trend
@@ -92,7 +94,8 @@ def _trend(peak: float | None, previous: list[float]) -> Trend:
 
 def compare_row(session: Session, city: City, now_utc: datetime, settings: Settings) -> CompareRow:
     today = local_now(now_utc, city.timezone).date()
-    state, _ = current_for_city(session, city, now_utc, settings)
+    current = current_for_city(session, city, now_utc, settings)
+    state = current.state
     points = day_points(session, city, today)
     peak = max((uv for _, uv in points), default=None)
     if peak is None:
@@ -103,6 +106,7 @@ def compare_row(session: Session, city: City, now_utc: datetime, settings: Setti
         city=city,
         current_uv=state.display_uv,
         current_kind=state.display_kind,
+        current_synthetic=current.synthetic,
         peak_today=peak,
         hours_above_8=sum(1 for _, uv in points if uv >= 8),
         trend=_trend(peak, previous_values),
@@ -149,6 +153,7 @@ class MapPoint:
     city: City
     uv: float | None
     kind: str | None
+    synthetic: bool
 
 
 def map_points(
@@ -158,10 +163,13 @@ def map_points(
     for city in cities:
         today = local_now(now_utc, city.timezone).date()
         if when == "now":
-            state, _ = current_for_city(session, city, now_utc, settings)
-            result.append(MapPoint(city, state.display_uv, state.display_kind))
-        elif when == "peak_today":
-            result.append(MapPoint(city, today_peak(session, city, today), "forecast"))
+            current = current_for_city(session, city, now_utc, settings)
+            state = current.state
+            result.append(MapPoint(city, state.display_uv, state.display_kind, current.synthetic))
+            continue
+        synthetic = forecast_is_synthetic(session, city.id)
+        if when == "peak_today":
+            result.append(MapPoint(city, today_peak(session, city, today), "forecast", synthetic))
         else:
             tomorrow = [d for d in forecast_for_city(session, city, now_utc) if d.date > today]
             peak = (
@@ -169,5 +177,5 @@ def map_points(
                 if tomorrow
                 else today_peak(session, city, today + timedelta(days=1))
             )
-            result.append(MapPoint(city, peak, "forecast"))
+            result.append(MapPoint(city, peak, "forecast", synthetic))
     return result

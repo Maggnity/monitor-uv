@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings
 from app.domain.current import CurrentState, resolve_current
 from app.domain.daily import PeakWindow, best_windows, hours_at_or_above, peak_window
-from app.models import City, UvForecastDaily, UvReading
+from app.models import City, UvForecastDaily, UvForecastHourly, UvReading
 from app.services.forecast import latest_daily, latest_hourly
 from app.timeutil import local_now
 
@@ -78,6 +78,41 @@ def day_points(session: Session, city: City, d: date) -> list[tuple[datetime, fl
     return latest_hourly(session, city.id, start, end)
 
 
+def display_is_synthetic(
+    session: Session, city_id: int, state: CurrentState, now_utc: datetime
+) -> bool:
+    """O valor exibido como "UV agora" é gerado (provedor simulado / seed)?"""
+    if state.display_kind == "measured":
+        origin = session.scalar(
+            select(UvReading.origin)
+            .where(UvReading.city_id == city_id, UvReading.measured_at == state.measured_at)
+            .order_by(UvReading.origin.asc())
+            .limit(1)
+        )
+        return origin == "sintetico"
+    if state.display_kind == "estimated":
+        floor = now_utc.replace(minute=0, second=0, microsecond=0)
+        source = session.scalar(
+            select(UvForecastHourly.source)
+            .where(UvForecastHourly.city_id == city_id, UvForecastHourly.forecast_for == floor)
+            .order_by(UvForecastHourly.fetched_at.desc())
+            .limit(1)
+        )
+        return source == "simulado"
+    return False
+
+
+def forecast_is_synthetic(session: Session, city_id: int) -> bool:
+    """A previsão mais recente da cidade veio do provedor simulado?"""
+    source = session.scalar(
+        select(UvForecastDaily.source)
+        .where(UvForecastDaily.city_id == city_id)
+        .order_by(UvForecastDaily.fetched_at.desc())
+        .limit(1)
+    )
+    return source == "simulado"
+
+
 @dataclass(frozen=True)
 class NextPeak:
     date: date
@@ -94,9 +129,16 @@ def next_peak(session: Session, city: City, d: date) -> NextPeak | None:
     return NextPeak(d, float(daily[0].uv_max), None, None) if daily else None
 
 
+@dataclass(frozen=True)
+class CurrentView:
+    state: CurrentState
+    next_peak: "NextPeak | None"
+    synthetic: bool
+
+
 def current_for_city(
     session: Session, city: City, now_utc: datetime, settings: Settings
-) -> tuple[CurrentState, NextPeak | None]:
+) -> CurrentView:
     state = resolve_current(
         now_utc,
         city.timezone,
@@ -110,7 +152,7 @@ def current_for_city(
         local = local_now(now_utc, city.timezone)
         day = local.date() + timedelta(days=1) if local.hour >= EVENING_HOUR else local.date()
         peak = next_peak(session, city, day)
-    return state, peak
+    return CurrentView(state, peak, display_is_synthetic(session, city.id, state, now_utc))
 
 
 @dataclass(frozen=True)

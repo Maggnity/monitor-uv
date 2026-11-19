@@ -48,6 +48,9 @@ class CurrentOut(BaseModel):
     display_kind: Literal["measured", "estimated"] | None = Field(
         description="measured = medição real; estimated = previsão para a hora atual"
     )
+    display_synthetic: bool = Field(
+        description="O valor exibido é dado de demonstração (provedor simulado ou seed)"
+    )
     measured_uv: float | None
     measured_at: datetime | None
     estimated_uv: float | None
@@ -98,6 +101,9 @@ class ForecastDayOut(BaseModel):
 class HealthOut(BaseModel):
     status: str
     database: str
+    uv_provider: Literal["openuv", "simulado"] = Field(
+        description="Provedor do UV atual em uso (simulado quando não há chave da OpenUV)"
+    )
 
 
 class HistoryDayOut(BaseModel):
@@ -117,6 +123,7 @@ class CompareRowOut(BaseModel):
     city: CityOut
     current_uv: float | None
     current_kind: Literal["measured", "estimated"] | None
+    current_synthetic: bool = Field(description="O UV atual é dado de demonstração")
     peak_today: float | None = Field(description="Pico previsto para hoje")
     hours_above_8: int = Field(description="Horas previstas hoje com UV >= 8")
     trend: Literal["up", "down", "stable"] = Field(
@@ -157,6 +164,7 @@ class MapPointOut(BaseModel):
     uv: float | None
     level: LevelOut | None
     kind: Literal["measured", "estimated", "forecast"] | None
+    synthetic: bool = Field(description="O valor é dado de demonstração")
 
 
 class AlertCreate(BaseModel):

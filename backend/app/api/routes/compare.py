@@ -41,6 +41,11 @@ def _parse_ids(raw: str | None, session) -> list[City]:
     return [by_id[i] for i in ids]
 
 
+def _decimal(value: float | None) -> str:
+    """Número no formato do Excel pt-BR (vírgula decimal)."""
+    return "" if value is None else str(value).replace(".", ",")
+
+
 CityIds = Annotated[
     str | None,
     Query(description="Até 4 ids separados por vírgula para o gráfico (padrão: os 4 primeiros)"),
@@ -79,6 +84,7 @@ def compare(
                 city=CityOut.model_validate(r.city),
                 current_uv=r.current_uv,
                 current_kind=r.current_kind,
+                current_synthetic=r.current_synthetic,
                 peak_today=r.peak_today,
                 hours_above_8=r.hours_above_8,
                 trend=r.trend,
@@ -101,7 +107,7 @@ def compare(
 def export_csv(session: SessionDep, now: NowDep, settings: SettingsDep):
     day = local_now(now, REFERENCE_TZ).date()
     buffer = io.StringIO()
-    writer = csv.writer(buffer)
+    writer = csv.writer(buffer, delimiter=";")
     writer.writerow(
         [
             "cidade",
@@ -124,15 +130,15 @@ def export_csv(session: SessionDep, now: NowDep, settings: SettingsDep):
                 city.name,
                 city.state,
                 day.isoformat(),
-                "" if row.current_uv is None else row.current_uv,
+                _decimal(row.current_uv),
                 {"measured": "medido", "estimated": "estimado"}.get(row.current_kind, ""),
-                "" if row.peak_today is None else row.peak_today,
+                _decimal(row.peak_today),
                 row.hours_above_8,
                 TREND_LABEL[row.trend],
-                "" if estimated is None else estimated,
+                _decimal(estimated),
             ]
         )
-    # BOM para o Excel reconhecer UTF-8 (acentos).
+    # BOM para o Excel reconhecer UTF-8 (acentos); `;` e vírgula decimal = padrão pt-BR.
     return Response(
         content="﻿" + buffer.getvalue(),
         media_type="text/csv; charset=utf-8",

@@ -31,6 +31,7 @@ def city_map(
             uv=p.uv,
             level=LevelOut.of(classify(p.uv)) if p.uv is not None else None,
             kind=p.kind if p.uv is not None else None,
+            synthetic=p.synthetic and p.uv is not None,
         )
         for p in map_points(session, cities, now, settings, when)
     ]

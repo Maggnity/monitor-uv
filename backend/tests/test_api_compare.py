@@ -88,7 +88,7 @@ def test_export_csv_header_and_rows(client, session):
     response = client.get("/api/v1/compare/export.csv")
     assert response.headers["content-type"].startswith("text/csv")
     assert "comparativo-uv-2026-11-18.csv" in response.headers["content-disposition"]
-    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig"))))
+    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
     assert rows[0] == [
         "cidade",
         "uf",
@@ -112,3 +112,30 @@ def test_map_tomorrow_uses_daily_forecast(client, session):
     assert fortaleza["kind"] == "forecast"
     assert fortaleza["level"]["key"] == "extreme"
     assert len(body) == 5
+
+
+def test_export_csv_uses_brazilian_decimal_comma(client, session):
+    seed_cities(session)
+    add_hourly(session, 1, sp_hour(12), 10.4)
+    response = client.get("/api/v1/compare/export.csv")
+    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
+    sao_paulo = rows[1]
+    assert sao_paulo[5] == "10,4"
+
+
+def test_compare_row_flags_synthetic_current(client, session):
+    from tests.factories import add_reading
+
+    seed_cities(session)
+    add_reading(session, 1, datetime(2026, 11, 18, 16, 55, tzinfo=UTC), 7, origin="sintetico")
+    row = next(r for r in client.get("/api/v1/compare").json()["rows"] if r["city"]["id"] == 1)
+    assert row["current_synthetic"] is True
+
+
+def test_map_now_flags_synthetic(client, session):
+    from tests.factories import add_reading
+
+    seed_cities(session)
+    add_reading(session, 1, datetime(2026, 11, 18, 16, 55, tzinfo=UTC), 7, origin="sintetico")
+    point = next(p for p in client.get("/api/v1/map").json() if p["city_id"] == 1)
+    assert point["synthetic"] is True

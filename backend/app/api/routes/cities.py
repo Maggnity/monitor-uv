@@ -55,7 +55,8 @@ def current(
         None, description="Fototipo de Fitzpatrick para estimar o tempo até queimar"
     ),
 ):
-    state, peak = service.current_for_city(session, city, now, settings)
+    current = service.current_for_city(session, city, now, settings)
+    state, peak = current.state, current.next_peak
     burn = None
     if phototype and state.display_uv is not None:
         med = med_for(session, phototype)
@@ -65,6 +66,7 @@ def current(
         status=state.status,
         display_uv=state.display_uv,
         display_kind=state.display_kind,
+        display_synthetic=current.synthetic,
         measured_uv=state.measured_uv,
         measured_at=state.measured_at,
         estimated_uv=state.estimated_uv,

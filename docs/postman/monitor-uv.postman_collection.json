@@ -1,0 +1,514 @@
+{
+  "info": {
+    "name": "Monitor UV API",
+    "description": "Coleção gerada a partir do OpenAPI (http://localhost:8000/openapi.json).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "clientId",
+      "value": "00000000-0000-4000-8000-000000000001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Saúde",
+      "item": [
+        {
+          "name": "Estado da API e do banco",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cidades",
+      "item": [
+        {
+          "name": "Lista cidades (com busca por nome)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "sao",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cidade monitorada mais próxima",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/nearest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "nearest"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "-23.55",
+                  "disabled": true
+                },
+                {
+                  "key": "lng",
+                  "value": "-46.63",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UV agora",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/1/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "1",
+                "current"
+              ],
+              "query": [
+                {
+                  "key": "phototype",
+                  "value": "II",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Linha do tempo de hoje (6h–19h)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/1/today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "1",
+                "today"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Previsão de 5 dias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/1/forecast",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "1",
+                "forecast"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Histórico de UV máximo diário",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cities/1/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cities",
+                "1",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "7d",
+                  "disabled": false
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comparação",
+      "item": [
+        {
+          "name": "Compara cidades: tabela e séries por hora",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/compare",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "compare"
+              ],
+              "query": [
+                {
+                  "key": "city_ids",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Exporta a tabela comparativa de hoje em CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/compare/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "compare",
+                "export.csv"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mapa",
+      "item": [
+        {
+          "name": "UV de todas as cidades para o mapa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "map"
+              ],
+              "query": [
+                {
+                  "key": "when",
+                  "value": "now",
+                  "disabled": false
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leituras",
+      "item": [
+        {
+          "name": "Consulta paginada das leituras gravadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "readings"
+              ],
+              "query": [
+                {
+                  "key": "city_id",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "origin",
+                  "value": "real",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "20",
+                  "disabled": false
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alertas",
+      "item": [
+        {
+          "name": "Alertas deste navegador",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Cria um alerta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city_id\": 5,\n  \"threshold\": 8\n}"
+            }
+          }
+        },
+        {
+          "name": "Liga/desliga ou muda o limite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "1"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Exclui um alerta",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "1"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Disparos recentes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alerts/triggers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "triggers"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Genética",
+      "item": [
+        {
+          "name": "Fototipos de pele (Fitzpatrick) e dose mínima para queimadura",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/phototypes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "phototypes"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

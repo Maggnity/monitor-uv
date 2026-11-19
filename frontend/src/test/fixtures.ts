@@ -18,6 +18,7 @@ export function makeCurrent(overrides: Partial<Current> = {}): Current {
     status: 'ok',
     display_uv: 9,
     display_kind: 'measured',
+    display_synthetic: false,
     measured_uv: 9,
     measured_at: '2026-11-18T16:56:00Z',
     estimated_uv: 9.3,

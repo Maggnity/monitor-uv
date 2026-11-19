@@ -15,6 +15,7 @@ const POINTS: MapPoint[] = [
     uv: 12.4,
     level: { key: 'extreme', label: 'Extremo', recommendation: 'Evite exposição; proteção máxima' },
     kind: 'measured',
+    synthetic: false,
   },
 ]
 

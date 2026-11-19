@@ -11,11 +11,11 @@ interface Props {
   children?: React.ReactNode
 }
 
-function NightPeak({ current }: { current: Current }) {
+function NightPeak({ current, now }: { current: Current; now: Date }) {
   const peak = current.next_peak
   if (!peak) return null
   const tz = current.city.timezone
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date())
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now)
   const when = peak.date === today ? 'Hoje' : 'Amanhã'
   const range = peak.start && peak.end ? `, das ${hourLabel(peak.start, tz)} às ${hourLabel(peak.end, tz)}` : ''
   return (
@@ -24,6 +24,13 @@ function NightPeak({ current }: { current: Current }) {
       {range}.
     </p>
   )
+}
+
+function isBeforeDawn(now: Date, timeZone: string): boolean {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(now),
+  )
+  return hour < 12
 }
 
 /** Card principal: um número grande, uma cor, uma frase. */
@@ -64,7 +71,7 @@ export function UvCard({ current, now = new Date(), children }: Props) {
           UV agora em {current.city.name}
         </h2>
         {isStale && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-3 py-1 text-sm font-semibold text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-sm font-semibold text-white">
             <WifiOff aria-hidden="true" size={14} /> Desatualizado
           </span>
         )}
@@ -89,8 +96,12 @@ export function UvCard({ current, now = new Date(), children }: Props) {
       <div className="mt-4 space-y-1">
         {isNight ? (
           <>
-            <p className="text-xl font-semibold">O sol já se pôs. UV zero agora.</p>
-            <NightPeak current={current} />
+            <p className="text-xl font-semibold">
+              {isBeforeDawn(now, current.city.timezone)
+                ? 'O sol ainda não nasceu. UV zero agora.'
+                : 'O sol já se pôs. UV zero agora.'}
+            </p>
+            <NightPeak current={current} now={now} />
           </>
         ) : (
           <>
@@ -109,10 +120,16 @@ export function UvCard({ current, now = new Date(), children }: Props) {
       <p className="mt-4 flex items-center gap-1.5 text-sm opacity-90">
         <Clock aria-hidden="true" size={14} />
         {isStale && measuredAgo && `Estação sem dados novos · última medição ${measuredAgo}`}
+        {!isStale && current.display_synthetic && 'Dado simulado para demonstração (sem chave da OpenUV)'}
         {!isStale &&
+          !current.display_synthetic &&
           current.display_kind === 'estimated' &&
           `Estimado agora pela previsão${measuredAgo ? ` · última medição ${measuredAgo}` : ''}`}
-        {!isStale && current.display_kind === 'measured' && measuredAgo && `Medido · atualizado ${measuredAgo}`}
+        {!isStale &&
+          !current.display_synthetic &&
+          current.display_kind === 'measured' &&
+          measuredAgo &&
+          `Medido · atualizado ${measuredAgo}`}
       </p>
     </section>
   )

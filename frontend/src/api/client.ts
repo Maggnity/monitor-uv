@@ -12,14 +12,16 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {}
+  // Só os alertas são por navegador; as demais rotas são públicas.
+  if (path.startsWith('/alerts')) headers['X-Client-Id'] = getClientId()
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+
   let response: Response
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method,
-      headers: {
-        'X-Client-Id': getClientId(),
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      },
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {

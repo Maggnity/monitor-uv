@@ -32,6 +32,8 @@ export interface Current {
   status: CurrentStatus
   display_uv: number | null
   display_kind: ValueKind | null
+  /** Valor de demonstração (provedor simulado ou seed) */
+  display_synthetic: boolean
   measured_uv: number | null
   measured_at: string | null
   estimated_uv: number | null
@@ -83,6 +85,7 @@ export interface CompareRow {
   city: City
   current_uv: number | null
   current_kind: ValueKind | null
+  current_synthetic: boolean
   peak_today: number | null
   hours_above_8: number
   trend: Trend
@@ -108,6 +111,7 @@ export interface MapPoint {
   uv: number | null
   level: Level | null
   kind: ValueKind | 'forecast' | null
+  synthetic: boolean
 }
 
 export interface Alert {
@@ -133,4 +137,10 @@ export interface Phototype {
   description: string
   med_j_m2: number
   source: string
+}
+
+export interface Health {
+  status: string
+  database: string
+  uv_provider: 'openuv' | 'simulado'
 }

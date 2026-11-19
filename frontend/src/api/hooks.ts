@@ -7,6 +7,7 @@ import type {
   Compare,
   Current,
   ForecastDay,
+  Health,
   History,
   MapPoint,
   MapWhen,
@@ -16,6 +17,9 @@ import type {
 } from './types'
 
 const FIVE_MINUTES = 5 * 60_000
+
+export const useHealth = () =>
+  useQuery({ queryKey: ['health'], queryFn: () => apiGet<Health>('/health'), staleTime: 5 * 60_000 })
 
 export const useCities = () =>
   useQuery({ queryKey: ['cities'], queryFn: () => apiGet<City[]>('/cities'), staleTime: Infinity })

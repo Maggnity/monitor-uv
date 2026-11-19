@@ -78,4 +78,42 @@ describe('UvCard', () => {
     render(<UvCard current={makeCurrent({ minutes_to_burn: 17 })} now={NOW} />)
     expect(screen.getByText(/você pode se queimar em cerca de 17 min agora/i)).toBeInTheDocument()
   })
+
+  it('dado simulado nunca aparece como medido', () => {
+    render(<UvCard current={makeCurrent({ display_synthetic: true })} now={NOW} />)
+    expect(screen.getByText(/simulado/i)).toBeInTheDocument()
+    expect(screen.queryByText(/medido/i)).not.toBeInTheDocument()
+  })
+
+  it('antes do amanhecer não diz que o sol já se pôs', () => {
+    render(
+      <UvCard
+        current={makeCurrent({
+          status: 'night',
+          display_uv: 0,
+          display_kind: 'estimated',
+          level: { key: 'low', label: 'Baixo', recommendation: 'Sem proteção necessária' },
+          next_peak: { date: '2026-11-18', uv_max: 11, start: '2026-11-18T14:00:00Z', end: '2026-11-18T17:00:00Z' },
+        })}
+        now={new Date('2026-11-18T06:00:00Z')}
+      />,
+    )
+    expect(screen.queryByText(/o sol já se pôs/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/o sol ainda não nasceu/i)).toBeInTheDocument()
+    expect(screen.getByText(/hoje o pico deve chegar a 11/i)).toBeInTheDocument()
+  })
+
+  it('selo Desatualizado tem fundo sólido escuro (contraste em qualquer nível)', () => {
+    render(
+      <UvCard
+        current={makeCurrent({
+          status: 'stale',
+          display_uv: 4,
+          level: { key: 'moderate', label: 'Moderado', recommendation: 'Use protetor solar e óculos' },
+        })}
+        now={NOW}
+      />,
+    )
+    expect(screen.getByText('Desatualizado').closest('span')).toHaveClass('bg-neutral-900')
+  })
 })

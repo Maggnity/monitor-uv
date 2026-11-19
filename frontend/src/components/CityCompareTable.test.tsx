@@ -10,6 +10,7 @@ function row(id: number, name: string, peak: number): CompareRow {
     city: { ...SAO_PAULO, id, name },
     current_uv: peak - 1,
     current_kind: 'measured',
+    current_synthetic: false,
     peak_today: peak,
     hours_above_8: 2,
     trend: 'stable',

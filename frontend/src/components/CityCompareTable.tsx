@@ -96,7 +96,11 @@ export function CityCompareTable({ rows }: { rows: CompareRow[] }) {
                 <td className="px-3 py-3">
                   <span className="flex items-center gap-2">
                     <UvBadge uv={row.current_uv} size="sm" />
-                    {row.current_kind === 'estimated' && <span className="text-xs text-neutral-600">estimado</span>}
+                    {(row.current_synthetic || row.current_kind === 'estimated') && (
+                      <span className="text-xs text-neutral-600">
+                        {row.current_synthetic ? 'simulado' : 'estimado'}
+                      </span>
+                    )}
                   </span>
                 </td>
                 <td className="px-3 py-3">

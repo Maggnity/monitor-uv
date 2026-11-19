@@ -51,7 +51,12 @@ export function CitySheet({ point, onClose }: Props) {
       </div>
       <div className="mt-2 flex items-center gap-2">
         <UvBadge uv={point.uv} levelKey={point.level?.key} />
-        {point.kind && <span className="text-sm text-neutral-600">{KIND_LABEL[point.kind]}</span>}
+        {point.kind && (
+          <span className="text-sm text-neutral-600">
+            {KIND_LABEL[point.kind]}
+            {point.synthetic && ' · simulado'}
+          </span>
+        )}
       </div>
       {point.level && <p className="mt-3 font-semibold">{point.level.recommendation}</p>}
       <Link

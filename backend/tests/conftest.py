@@ -1,4 +1,5 @@
 import os
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy import create_engine, text
@@ -37,3 +38,26 @@ def session(engine):
     if tables:
         with engine.begin() as conn:
             conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+
+
+FIXED_NOW = datetime(2026, 11, 18, 17, 0, tzinfo=UTC)  # 14h em São Paulo
+
+
+@pytest.fixture
+def clock():
+    return {"now": FIXED_NOW}
+
+
+@pytest.fixture
+def client(session, clock):
+    from fastapi.testclient import TestClient
+
+    from app.api.deps import get_now
+    from app.api.main import app
+    from app.db import get_session
+
+    app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[get_now] = lambda: clock["now"]
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()

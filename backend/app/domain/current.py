@@ -4,8 +4,9 @@ Regras (spec, seção 5.0):
 1. Sem leitura e sem estimativa: `no_data`.
 2. Mostra a medição se tiver menos de 30 min; senão a estimativa da previsão, rotulada.
 3. `night` quando o valor mostrado é ~0 fora do período de sol (tem precedência).
-4. `stale` só dentro da janela de coleta (a partir da 1ª coleta esperada do dia), quando a medição tem mais de 2x o intervalo;
-   nesse caso mostra o último valor medido, marcado como desatualizado.
+4. `stale` só dentro da janela de coleta (a partir da 1ª coleta esperada do dia), quando
+   a medição tem mais de 2x o intervalo; nesse caso mostra o último valor medido,
+   marcado como desatualizado.
 """
 
 from dataclasses import dataclass
